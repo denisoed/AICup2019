@@ -20,12 +20,31 @@ class MyStrategy {
         }
     };
 
-    getNearestHealthPack(user_pos) {
+    getNearestHealthPack(user_pos, unit) {
         let arrayX = [];
+        let arrayY = [];
         this.healthBoxes.forEach(box => {
             arrayX.push({ 'num': (Math.abs(box.position.x - user_pos.x) + user_pos.x), 'box': box });
+            arrayY.push({ 'num': (Math.abs(box.position.y - user_pos.y) + user_pos.y), 'box': box });
         });
-        return arrayX.sort((a, b) => (a.num > b.num) ? 1 : ((b.num > a.num) ? -1 : 0))[0];
+        let nearestByX = arrayX.sort((a, b) => (a.num > b.num) ? 1 : ((b.num > a.num) ? -1 : 0))[0];
+        let nearestByY = arrayY.sort((a, b) => (a.num > b.num) ? 1 : ((b.num > a.num) ? -1 : 0))[0];
+        if (Math.abs(nearestByX.num + user_pos.x) === Math.abs(nearestByY.num + user_pos.y)) {
+            if (user_pos.x > unit.position.x) {
+                if (user_pos.x < nearestByX.box.position.x) {
+                    return nearestByX;
+                }
+                return nearestByY
+            }
+            if (user_pos.x > nearestByX.box.position.x) {
+                return nearestByY;
+            }
+            return nearestByX
+        }
+        if (nearestByX.num + user_pos.x > nearestByY.num + user_pos.y) {
+            return nearestByX;
+        }
+        return nearestByY;
     };
 
     // ------------- Distance ------------ //
@@ -46,8 +65,14 @@ class MyStrategy {
     };
 
     // ------------ Barriers ------------- //
-    detectWall() {
-        console.log(Tile.Wall);
+    async detectWall(game, unit, targetPos) {
+        // if (targetPos.x > unit.position.x && await game.level.tiles[parseInt(unit.position.x + 2)][parseInt(unit.position.y)] === Tile.Wall) {
+        //     console.log('Wall');
+        // }
+
+        // if (targetPos.x < unit.position.x && await game.level.tiles[parseInt(unit.position.x - 2)][parseInt(unit.position.y)] === Tile.Wall) {
+        //     console.log('Wall');
+        // }
     };
 
     // ------------ Shoot -------------- //
@@ -72,8 +97,7 @@ class MyStrategy {
             return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2);
         };
 
-        this.detectWall();
-
+        
         let minDistance = Number.POSITIVE_INFINITY;
         this.getHealthPacks(game);
         const nearestEnemy = game.units
@@ -102,7 +126,7 @@ class MyStrategy {
                 }
                 return prev;
             });
-
+        
         let targetPos = this.moveBot(unit, nearestWeapon, nearestEnemy);
         await debug.draw(new CustomData.Log(`Target pos: X: ${targetPos.x.toString()}, Y: ${targetPos.y.toString()}`));
         
@@ -115,13 +139,15 @@ class MyStrategy {
         }
 
         let jump = targetPos.y > unit.position.y;
-        if (targetPos.x > unit.position.x && game.level.tiles[parseInt(unit.position.x + 1)][parseInt(unit.position.y)] === Tile.WALL) {
+        if (targetPos.x > unit.position.x && await game.level.tiles[parseInt(unit.position.x + 1)][parseInt(unit.position.y)] === Tile.Wall) {
             jump = true;
         }
             
-        if (targetPos.x < unit.position.x && game.level.tiles[parseInt(unit.position.x - 1)][parseInt(unit.position.y)] === Tile.WALL) {
+        if (targetPos.x < unit.position.x && await game.level.tiles[parseInt(unit.position.x - 1)][parseInt(unit.position.y)] === Tile.Wall) {
             jump = true;
         }
+
+        // this.detectWall(game, unit, targetPos);
 
         return new UnitAction(
             (targetPos.x - unit.position.x) * 3,
