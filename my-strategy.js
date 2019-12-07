@@ -9,6 +9,7 @@ class MyStrategy {
     constructor() {
         this.healthBoxes = [];
         this.theSafeDistance = 10;
+        this.shoot = false;
     };
 
     async getMap(game, unit, nearestEnemy) {
@@ -27,7 +28,7 @@ class MyStrategy {
                         str += await data[tempIndex][i] + ' ';
                     }
                 } else {
-                    if (Math.round(unit.position.x - 1) === j && Math.round(unit.position.y - 1) === i) {
+                    if (Math.round(unit.position.x) === j && Math.round(unit.position.y - 1) === i) {
                         str += '♞ ';
                     } else if (Math.round(nearestEnemy.position.x - 1) === j && Math.round(nearestEnemy.position.y) === i) {
                         str += '♜ ';
@@ -97,8 +98,25 @@ class MyStrategy {
     };
 
     // ------------ Barriers ------------- //
-    async detectWall(game, unit, targetPos, nearestEnemy) {        
+    async detectWall(game, unit, targetPos, nearestEnemy) {
+        // Display map in console  
         console.log(await this.getMap(game, unit, nearestEnemy));
+        const distanceDetween = Math.round(Math.abs(nearestEnemy.position.x - unit.position.x));
+        let isWall = 0;
+        let r = [];
+
+        for (let i = 0; i < distanceDetween; i++) {
+            if (await game.level.tiles[parseInt(unit.position.x - i)][parseInt(unit.position.y)] === 1) {
+                isWall += await game.level.tiles[parseInt(unit.position.x - i)][parseInt(unit.position.y)];
+            }
+            r.push(await game.level.tiles[parseInt(unit.position.x - i)][parseInt(unit.position.y)]);
+        }
+
+        if (isWall === 0) {
+            this.shoot = true;
+        } else {
+            this.shoot = false;
+        }
 
         if (nearestEnemy.position.x < unit.position.x) {
             if (targetPos.x > unit.position.x && await game.level.tiles[parseInt(unit.position.x + 1)][parseInt(unit.position.y)] === Tile.Wall) {
@@ -138,7 +156,6 @@ class MyStrategy {
         const distanceSqr = function (a, b) {
             return Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2);
         };
-
         
         let minDistance = Number.POSITIVE_INFINITY;
         this.getHealthPacks(game);
@@ -196,7 +213,7 @@ class MyStrategy {
             jump,
             !jump,
             aim,
-            true,
+            this.shoot,
             false,
             false,
             false
