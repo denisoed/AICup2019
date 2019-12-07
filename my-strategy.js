@@ -8,7 +8,7 @@ class MyStrategy {
 
     constructor() {
         this.healthBoxes = [];
-        this.theSafeDistance = 10;
+        this.theSafeDistance = 8;
         this.shoot = false;
     };
 
@@ -99,24 +99,12 @@ class MyStrategy {
 
     // ------------ Barriers ------------- //
     async detectWall(game, unit, targetPos, nearestEnemy) {
-        // Display map in console  
+        // Display map in console for debug 
         console.log(await this.getMap(game, unit, nearestEnemy));
+
         const distanceDetween = Math.round(Math.abs(nearestEnemy.position.x - unit.position.x));
-        let isWall = 0;
-        let r = [];
-
-        for (let i = 0; i < distanceDetween; i++) {
-            if (await game.level.tiles[parseInt(unit.position.x - i)][parseInt(unit.position.y)] === 1) {
-                isWall += await game.level.tiles[parseInt(unit.position.x - i)][parseInt(unit.position.y)];
-            }
-            r.push(await game.level.tiles[parseInt(unit.position.x - i)][parseInt(unit.position.y)]);
-        }
-
-        if (isWall === 0) {
-            this.shoot = true;
-        } else {
-            this.shoot = false;
-        }
+        let isWallForBot = 0;
+        let isWallForEnemy = 0;
 
         if (nearestEnemy.position.x < unit.position.x) {
             if (targetPos.x > unit.position.x && await game.level.tiles[parseInt(unit.position.x + 1)][parseInt(unit.position.y)] === Tile.Wall) {
@@ -125,6 +113,17 @@ class MyStrategy {
             if (targetPos.x < unit.position.x && await game.level.tiles[parseInt(unit.position.x - 1)][parseInt(unit.position.y)] === Tile.Wall) {
                 // Wall front
             }
+
+            for (let i = 0; i < distanceDetween; i++) {
+                if (await game.level.tiles[parseInt(unit.position.x - i)][parseInt(unit.position.y)] === 1) {
+                    isWallForBot += await game.level.tiles[parseInt(unit.position.x - i)][parseInt(unit.position.y)];
+                }
+            }
+            for (let i = 0; i < distanceDetween; i++) {
+                if (await game.level.tiles[parseInt(nearestEnemy.position.x + i)][parseInt(nearestEnemy.position.y)] === 1) {
+                    isWallForEnemy += await game.level.tiles[parseInt(nearestEnemy.position.x + i)][parseInt(nearestEnemy.position.y)];
+                }
+            }
         } else {
             if (targetPos.x > unit.position.x && await game.level.tiles[parseInt(unit.position.x + 1)][parseInt(unit.position.y)] === Tile.Wall) {
                 // Wall front
@@ -132,6 +131,22 @@ class MyStrategy {
             if (targetPos.x < unit.position.x && await game.level.tiles[parseInt(unit.position.x - 1)][parseInt(unit.position.y)] === Tile.Wall) {
                 // Wall behind
             }
+            for (let i = 0; i < distanceDetween; i++) {
+                if (await game.level.tiles[parseInt(unit.position.x + i)][parseInt(unit.position.y)] === 1) {
+                    isWallForBot += await game.level.tiles[parseInt(unit.position.x + i)][parseInt(unit.position.y)];
+                }
+            }
+            for (let i = 0; i < distanceDetween; i++) {
+                if (await game.level.tiles[parseInt(nearestEnemy.position.x - i)][parseInt(nearestEnemy.position.y)] === 1) {
+                    isWallForEnemy += await game.level.tiles[parseInt(nearestEnemy.position.x - i)][parseInt(nearestEnemy.position.y)];
+                }
+            }
+        }
+
+        if (isWallForBot === 0 && isWallForEnemy === 0) {
+            this.shoot = true;
+        } else {
+            this.shoot = false;
         }
     };
 
